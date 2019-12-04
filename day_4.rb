@@ -64,3 +64,5 @@ puts 'day_4 part_2'
 # passwords = [112233, 123444, 111122]
 
 puts passwords.count { |p| contains_exact_sequence?(split_digits(p), 2) }
+
+# 364
