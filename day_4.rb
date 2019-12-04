@@ -35,7 +35,7 @@ def contains_sequence?(numbers, sequence_length)
 end
 
 def digits_never_decrease?(numbers)
-  0.upto((numbers.size - 2)) { |i| return false if numbers[i] > numbers[(i + 1)] }
+  numbers.join.eql?(numbers.sort.join)
 end
 
 passwords = range_start.upto(range_end).select do |number|
