@@ -1,0 +1,6 @@
+Metrics/LineLength:
+  Max: 165
+ClassLength:
+  Max: 160
+ModuleLength:
+  Max: 175
