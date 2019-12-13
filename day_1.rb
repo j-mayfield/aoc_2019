@@ -1,106 +1,107 @@
 input = %w(
-104489
-69854
-93424
-103763
-119636
-130562
-121744
-84851
-143661
-94519
-116576
-148771
-74038
-131735
-95594
-125198
-92217
-84471
-53518
-97787
-55422
-137807
-78806
-74665
-103930
-121642
-123008
-104598
-97383
-129359
-85372
-88930
-106944
-118404
-126095
-67230
-116697
-85950
-148291
-123171
-82736
-52753
-134746
-53238
-74952
-105933
-104613
-115283
-80320
-139152
-76455
-66729
-81209
-130176
-116843
-67292
-74262
-131694
-92817
-51540
-58957
-143342
-76896
-129631
-77148
-129784
-115307
-96214
-110538
-51492
-124376
-78161
-59821
-58184
-132524
-130714
-112653
-137988
-112269
-62214
-115989
-123073
-119711
-82258
-67695
-81023
-70012
-93438
-131749
-103652
-63557
-88224
-117414
-75579
-146422
-139852
-85116
-124902
-143167
-147781
+  104489
+  69854
+  93424
+  103763
+  119636
+  130562
+  121744
+  84851
+  143661
+  94519
+  116576
+  148771
+  74038
+  131735
+  95594
+  125198
+  92217
+  84471
+  53518
+  97787
+  55422
+  137807
+  78806
+  74665
+  103930
+  121642
+  123008
+  104598
+  97383
+  129359
+  85372
+  88930
+  106944
+  118404
+  126095
+  67230
+  116697
+  85950
+  148291
+  123171
+  82736
+  52753
+  134746
+  53238
+  74952
+  105933
+  104613
+  115283
+  80320
+  139152
+  76455
+  66729
+  81209
+  130176
+  116843
+  67292
+  74262
+  131694
+  92817
+  51540
+  58957
+  143342
+  76896
+  129631
+  77148
+  129784
+  115307
+  96214
+  110538
+  51492
+  124376
+  78161
+  59821
+  58184
+  132524
+  130714
+  112653
+  137988
+  112269
+  62214
+  115989
+  123073
+  119711
+  82258
+  67695
+  81023
+  70012
+  93438
+  131749
+  103652
+  63557
+  88224
+  117414
+  75579
+  146422
+  139852
+  85116
+  124902
+  143167
+  147781
 )
 
+# rubocop:disable Metrics/LineLength
 # --- Day 1: The Tyranny of the Rocket Equation ---
 # Santa has become stranded at the edge of the Solar System while delivering presents to other planets! To accurately calculate his position in space, safely align his warp drive, and return to Earth in time to save Christmas, he needs you to bring him measurements from fifty stars.
 #
@@ -121,12 +122,16 @@ input = %w(
 # The Fuel Counter-Upper needs to know the total fuel requirement. To find it, individually calculate the fuel needed for the mass of each module (your puzzle input), then add together all the fuel values.
 #
 # What is the sum of the fuel requirements for all of the modules on your spacecraft?
+# rubocop:enable Metrics/LineLength
 
 puts 'day_1 part_1'
 
 fuel_per_module = input.map { |m| (m.to_i / 3) - 2 }
 puts "fuel_required = #{fuel_per_module.inject(:+)}"
 
+# rubocop:disable Metrics/LineLength
+# Your puzzle answer was 3376997.
+#
 # --- Part Two ---
 # During the second Go / No Go poll, the Elf in charge of the Rocket Equation Double-Checker stops the launch sequence. Apparently, you forgot to include additional fuel for the fuel you just added.
 #
@@ -138,6 +143,7 @@ puts "fuel_required = #{fuel_per_module.inject(:+)}"
 # At first, a module of mass 1969 requires 654 fuel. Then, this fuel requires 216 more fuel (654 / 3 - 2). 216 then requires 70 more fuel, which requires 21 fuel, which requires 5 fuel, which requires no further fuel. So, the total fuel required for a module of mass 1969 is 654 + 216 + 70 + 21 + 5 = 966.
 # The fuel required by a module of mass 100756 and its fuel is: 33583 + 11192 + 3728 + 1240 + 411 + 135 + 43 + 12 + 2 = 50346.
 # What is the sum of the fuel requirements for all of the modules on your spacecraft when also taking into account the mass of the added fuel? (Calculate the fuel requirements for each module separately, then add them all up at the end.)
+# rubocop:enable Metrics/LineLength
 
 puts 'day_1 part_2'
 
@@ -148,3 +154,5 @@ def total_fuel(f)
 end
 
 puts "total_fuel = #{fuel_per_module.map { |f| total_fuel(f) }.inject(:+)}"
+
+# Your puzzle answer was 5062623.

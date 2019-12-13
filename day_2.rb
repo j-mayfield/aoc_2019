@@ -1,3 +1,4 @@
+# rubocop:disable Metrics/LineLength
 # --- Day 2: 1202 Program Alarm ---
 # On the way to your gravity assist around the Moon, your ship computer beeps angrily about a "1202 program alarm". On the radio, an Elf is already explaining how to handle the situation: "Don't worry, that's perfectly norma--" The ship computer bursts into flames.
 #
@@ -43,11 +44,14 @@
 # 2,4,4,5,99,0 becomes 2,4,4,5,99,9801 (99 * 99 = 9801).
 # 1,1,1,4,99,5,6,0,99 becomes 30,1,1,4,2,5,6,0,99.
 # Once you have a working computer, the first step is to restore the gravity assist program (your puzzle input) to the "1202 program alarm" state it had just before the last computer caught fire. To do this, before running the program, replace position 1 with the value 12 and replace position 2 with the value 2. What value is left at position 0 after the program halts?
+# rubocop:enable Metrics/LineLength
 
 puts 'day_2 part_1'
 
 def input_array(noun, verb)
+  # rubocop:disable Metrics/LineLength
   input = '1,0,0,3,1,1,2,3,1,3,4,3,1,5,0,3,2,13,1,19,1,19,10,23,1,23,13,27,1,6,27,31,1,9,31,35,2,10,35,39,1,39,6,43,1,6,43,47,2,13,47,51,1,51,6,55,2,6,55,59,2,59,6,63,2,63,13,67,1,5,67,71,2,9,71,75,1,5,75,79,1,5,79,83,1,83,6,87,1,87,6,91,1,91,5,95,2,10,95,99,1,5,99,103,1,10,103,107,1,107,9,111,2,111,10,115,1,115,9,119,1,13,119,123,1,123,9,127,1,5,127,131,2,13,131,135,1,9,135,139,1,2,139,143,1,13,143,0,99,2,0,14,0'
+  # rubocop:enable Metrics/LineLength
   array = input.split(',').map(&:to_i)
   array[1] = noun.to_i
   array[2] = verb.to_i
@@ -56,22 +60,28 @@ end
 
 def intcode(array)
   array.each_slice(4) do |slice|
-    array[slice[3]] = case slice[0].to_i
-                      when 1
-                        array[slice[1]] + array[slice[2]]
-                      when 2
-                        array[slice[1]] * array[slice[2]]
-                      when 99
-                        break
-                      else
-                        fail "unknown input #{slice[0]}"
-                      end
+    opcode = slice[0].to_i
+    break if opcode.eql?(99)
+    send("op_#{opcode}", *[array: array, p1: slice[1], p2: slice[2], p3: slice[3]])
   end
   array[0]
 end
 
+# Addition
+def op_1(**args)
+  args[:array][args[:p3]] = args[:array][args[:p1]] + args[:array][args[:p2]]
+end
+
+# Multiplication
+def op_2(**args)
+  args[:array][args[:p3]] = args[:array][args[:p1]] * args[:array][args[:p2]]
+end
+
 puts "value left at position 0 = #{intcode(input_array(12, 2))}"
 
+# rubocop:disable Metrics/LineLength
+# Your puzzle answer was 7210630.
+#
 #  --- Part Two ---
 # "Good, the new computer seems to be working correctly! Keep it nearby during this mission - you'll probably use it again. Real Intcode computers support many more features than your new one, but we'll let you know what they are as you need them."
 #
@@ -90,11 +100,14 @@ puts "value left at position 0 = #{intcode(input_array(12, 2))}"
 # Once the program has halted, its output is available at address 0, also just like before. Each time you try a pair of inputs, make sure you first reset the computer's memory to the values in the program (your puzzle input) - in other words, don't reuse memory from a previous attempt.
 #
 # Find the input noun and verb that cause the program to produce the output 19690720. What is 100 * noun + verb? (For example, if noun=12 and verb=2, the answer would be 1202.)
+# rubocop:enable Metrics/LineLength
 
 puts 'day_2 part_2'
 
 0.upto(99) do |noun|
   0.upto(99) do |verb|
-    puts "noun = #{noun}\nverb = #{verb}\n100 * noun + verb = #{100 * noun + verb}" if intcode(input_array(noun, verb)).to_i.eql?(19_690_720)
+    puts "100 * noun + verb = #{100 * noun + verb}" if intcode(input_array(noun, verb)).to_i.eql?(19_690_720)
   end
 end
+
+# Your puzzle answer was 3892.
