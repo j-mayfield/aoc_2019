@@ -17,6 +17,7 @@ class IntCodeProcessor
       run_op(opcode, command, integer_input)
       return @output.last if opcode.eql?(4) && @interrupt
     end
+    puts 'HALT'
     @output
   end
 
