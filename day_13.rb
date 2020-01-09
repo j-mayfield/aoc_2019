@@ -27,6 +27,8 @@ output = IntCodeProcessor.new(File.read('day_13_input.txt')).run_intcode
 puts output.to_s
 puts number_of_blocks(output)
 
+# Your puzzle answer was 226.
+#
 # --- Part Two ---
 # The game didn't run because you didn't put in any quarters. Unfortunately, you did not bring any quarters. Memory address 0 represents the number of quarters that have been inserted; set it to 2 to play for free.
 #

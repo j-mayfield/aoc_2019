@@ -5,8 +5,9 @@ class IntCodeProcessor
     @input         = input_array(input)
     @output        = []
     @relative_base = 0
-    @persist_input = args[:persist_input].nil? ? false : args[:persist_input]
     @interrupt     = args[:interrupt].nil? ? false : args[:interrupt]
+    @persist_input = args[:persist_input].nil? ? false : args[:persist_input]
+    @quiet         = args[:quiet].nil? ? false : args[:quiet]
   end
 
   def run_intcode(*integer_input)
@@ -17,7 +18,7 @@ class IntCodeProcessor
       run_op(opcode, command, integer_input)
       return @output.last if opcode.eql?(4) && @interrupt
     end
-    puts 'HALT'
+    puts 'HALT' unless @quiet
     @output
   end
 
@@ -99,7 +100,7 @@ class IntCodeProcessor
   # Print Output
   def op_4(**args)
     @output << next_value(args[:param_mode_p1])
-    puts "[op_4] output: #{@output.last}"
+    puts "[op_4] output: #{@output.last}" unless @quiet
   end
 
   # Jump if True

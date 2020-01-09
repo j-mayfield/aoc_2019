@@ -40,42 +40,14 @@
 
 require_relative 'int_code_processor'
 
-# ---
-class Amplifier
-  def initialize(input: '', phase_range: [], restart_amps: true)
-    @input        = input
-    @phase_range  = phase_range
-    @restart_amps = restart_amps
-    @signal       = 0
-    @results      = []
-    create_new_amps
-  end
-
-  def amplify(phase)
-    create_new_amps if @restart_amps
-    phase.each_index { |i| @signal = @amps[i].run_intcode(phase[i], @signal) }
-    @signal
-  end
-
-  def max_output
-    @phase_range.permutation.each { |phase| @results << [phase.to_s, amplify(phase)] }
-    @results.sort_by { |a| a[1] }.last
-  end
-
-  private
-
-  def create_new_amps
-    puts 'creating new amps'
-    @amps = []
-    @phase_range.count.times { @amps << IntCodeProcessor.new(@input, interrupt: true) }
-  end
-end
-
 def amplify(input = '', phase_settings = [], signal = 0)
   amps = []
-  # phase_settings.count.times { amps << IntCodeProcessor.new(input, interrupt: true) }
-  phase_settings.count.times { amps << IntCodeProcessor.new(input) }
-  phase_settings.each_index { |i| signal = amps[i].run_intcode(phase_settings[i], signal) }
+  phase_settings.count.times { amps << IntCodeProcessor.new(input, interrupt: true) }
+  phase_settings.each_index do |i|
+    output = amps[i].run_intcode(phase_settings[i], signal)
+    break unless output.is_a?(Fixnum)
+    signal = output
+  end
   signal
 end
 
@@ -131,16 +103,135 @@ puts "max_signal = #{max_signal(File.read('day_7_input.txt'))}"
 # Try every combination of the new phase settings on the amplifier feedback loop. What is the highest signal that can be sent to the thrusters?
 #
 
+# def amplify_2(input = '', phase_settings = [], signal = 0)
+#   amps = phase_settings.each_index.map { |i| { processor: IntCodeProcessor.new(input, interrupt: true), phase_setting: phase_settings[i] } }.cycle
+#   loop do
+#     amp = amps.next
+#     puts "amp = #{amp} :: signal = #{signal}"
+#     output = amp[:processor].run_intcode(amp[:phase_setting], signal)
+#     break unless output.is_a?(Fixnum)
+#     signal = output
+#   end
+#   signal
+# end
+
+def amplify_2(input = '', phase_settings = [], signal = 0)
+  puts "*** phase_settings = #{phase_settings}"
+  phase_settings_cycle = phase_settings.cycle
+  loop do
+    phase_setting = phase_settings_cycle.next
+    puts "--- phase_setting = #{phase_setting} :: signal = #{signal}"
+    output = IntCodeProcessor.new(input, interrupt: true).run_intcode(phase_setting, signal)
+    puts "+++ output = #{output}"
+    break unless output.is_a?(Fixnum)
+    signal = output
+  end
+  signal
+end
+
+def max_signal_2(input)
+  results = []
+  [5, 6, 7, 8, 9].permutation.each { |phase| results << [phase.to_s, amplify_2(input, phase)] }
+  results.sort_by { |a| a[1] }.last
+end
+
+puts 'day_7 part_2'
+# puts "max_signal_2 = #{max_signal_2(File.read('day_7_input.txt'))}"
+puts "max_signal_2 = #{max_signal_2('3,26,1001,26,-4,26,3,27,1002,27,2,27,1,27,26,27,4,27,1001,28,-1,28,1005,28,6,99,0,0,5')}"
+puts 'expecting max thruster signal 139629729 (from phase setting sequence 9,8,7,6,5)'
+exit
+
+# ---
+class Amplifier
+  attr_reader :halted
+
+  def initialize(input, phase_setting)
+    @intcode_processor = IntCodeProcessor.new(input, interrupt: true, quiet: true)
+    @phase_setting     = phase_setting
+    @last_output       = -1
+    @halted            = false
+  end
+
+  def amplify(signal)
+    output = @intcode_processor.run_intcode(@phase_setting, signal)
+    output.is_a?(Fixnum) ? @last_output = output : @halted = true
+    @last_output
+  end
+end
+
+# ---
+class AmplifierBank
+  def initialize(input, phase_settings)
+    @amplifiers = phase_settings.map { |p| Amplifier.new(input, p) }
+    @signal     = 0
+  end
+
+  def run_all_amplifiers
+    puts "in  #{@signal}"
+    @amplifiers.each_index do |i|
+      output = @amplifiers[i].amplify(@signal)
+      next if @amplifiers[i].halted
+      @signal = output
+      puts "@amplifiers[#{i}] :: #{@signal}"
+    end
+    puts "out #{@signal}"
+  end
+
+  def amplify_with_feedback
+    puts "********* in  #{@signal}"
+    loop do
+      puts "+++ in  #{@signal}"
+      run_all_amplifiers
+      puts "+++ out #{@signal}"
+      break if @amplifiers.map(&:halted).inject(:&)
+    end
+    puts "********* out #{@signal}"
+    @signal
+  end
+end
+
+input = File.read('day_7_input.txt')
+results = [5, 6, 7, 8, 9].permutation.map do |p|
+  AmplifierBank.new(input, p).amplify_with_feedback
+end
+puts results.to_s
+
+exit
+
+
+
+def create_new_amps(input)
+  amps = []
+  5.times { amps << IntCodeProcessor.new(input, interrupt: true) }
+  amps
+end
+
+def amplify_with_feedback(amps, phase_settings, signal)
+  output = -1
+  this_signal ||= signal
+  phase_settings.each_index do |i|
+    output = amps[i].run_intcode(phase_settings[i], this_signal)
+    return 'HALT' unless output.is_a?(Fixnum)
+    puts "++ amp #{i} - phase_setting #{phase_settings[i]} - signal #{this_signal} - output #{output}"
+    this_signal = output
+  end
+  output
+end
+
 def max_signal_with_feedback(input)
   results = []
-  [5, 6, 7, 8, 9].permutation.each do |phase|
+  [5, 6, 7, 8, 9].permutation.each do |phase_settings|
     signal = 0
+    amps   = create_new_amps(input)
     loop do
-      signal = amplify(input, phase, signal)
-      puts "-- signal = #{signal}"
-      break unless signal.is_a?(Fixnum)
-      results << [phase.to_s, signal]
+      puts "-- signal = #{signal} and phase_settings = #{phase_settings}"
+      output = amplify_with_feedback(amps, phase_settings, signal)
+      break if output.eql?('HALT')
+      puts "-- output = #{output}"
+      results << [phase_settings.to_s, output]
+      signal = output
     end
+    puts "\n\n\n"
   end
   results.sort_by { |a| a[1] }.last
 end
@@ -154,6 +245,7 @@ exit
 puts 'day_7 part_2'
 puts "max_signal_with_feedback = #{max_signal_with_feedback(File.read('day_7_input.txt'))}"
 exit
+
 
 results = []
 [5, 6, 7, 8, 9].permutation.each do |phase|

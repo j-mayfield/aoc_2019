@@ -182,7 +182,7 @@ require 'binary_search_tree'
 # ---
 class Moon
   attr_accessor :x_vel, :y_vel, :z_vel
-  attr_reader :x_pos, :y_pos, :z_pos
+  attr_reader   :x_pos, :y_pos, :z_pos
 
   def initialize(x_pos, y_pos, z_pos)
     @x_pos   = x_pos
@@ -192,16 +192,14 @@ class Moon
     @y_vel   = 0
     @z_vel   = 0
     @history = BinarySearchTree.new
+    store_vector
   end
 
   def update_velocity(other_moon)
-    [Thread.new { update_x_vel(other_moon) },
-     Thread.new { update_y_vel(other_moon) },
-     Thread.new { update_z_vel(other_moon) }].each(&:join)
+    [Thread.new { update_x_vel(other_moon) }, Thread.new { update_y_vel(other_moon) }, Thread.new { update_z_vel(other_moon) }].each(&:join)
   end
 
   def update_position
-    @history.insert(position_bytes, position_string)
     @x_pos += @x_vel
     @y_pos += @y_vel
     @z_pos += @z_vel
@@ -211,8 +209,12 @@ class Moon
     (@x_pos.abs + @y_pos.abs + @z_pos.abs) * (@x_vel.abs + @y_vel.abs + @z_vel.abs)
   end
 
-  def been_here_before?
-    !@history.find(position_bytes).nil?
+  def store_vector
+    @history.insert(vector_bytes, vector_string)
+  end
+
+  def round_trip_found?
+    !@history.find(vector_bytes).nil?
   end
 
   private
@@ -247,16 +249,39 @@ class Moon
     end
   end
 
-  def position_string
-    "#{@x_pos},#{@y_pos},#{@z_pos}"
+  def vector_string
+    "#{@x_pos},#{@y_pos},#{@z_pos}:#{@x_vel},#{@y_vel},#{@z_vel}"
   end
 
-  def position_bytes
-    position_string.bytes.join
+  def vector_bytes
+    vector_string.bytes.join
   end
 end
 
-# Input
+#----
+class MoonSystem
+  attr_reader :moons, :step_count
+
+  def initialize(moons = [])
+    @moons      = moons
+    @step_count = 0
+  end
+
+  def step
+    @moons.combination(2).map { |moon_pair| Thread.new { moon_pair[0].update_velocity(moon_pair[1]) } }.each(&:join)
+    @moons.map { |moon| Thread.new { moon.update_position } }.each(&:join)
+    @step_count += 1
+  end
+
+  def run_steps(count)
+    count.times { step }
+  end
+
+  def total_energy
+    @moons.map(&:energy).inject(:+)
+  end
+end
+
 # <x=0, y=4, z=0>
 # <x=-10, y=-6, z=-14>
 # <x=9, y=-16, z=-3>
@@ -267,11 +292,11 @@ moons = [Moon.new(0, 4, 0),
          Moon.new(9, -16, -3),
          Moon.new(6, -1, 2)]
 
-1000.times do
-  moons.combination(2).each { |moon_pair| moon_pair[0].update_velocity(moon_pair[1]) }
-  moons.each(&:update_position)
-end
-puts "total energy = #{moons.map(&:energy).inject(:+)}"
+puts 'day_12 part_1'
+
+moon_system = MoonSystem.new(moons)
+moon_system.run_steps(1000)
+puts "total energy = #{moon_system.total_energy}"
 
 # Your puzzle answer was 13500.
 #
@@ -317,12 +342,27 @@ puts "total energy = #{moons.map(&:energy).inject(:+)}"
 #
 # How many steps does it take to reach the first state that exactly matches a previous state?
 
-i = 0
+puts 'day_12 part_2'
+
+test_moons = [Moon.new(-8, -10, 0),
+              Moon.new(5, 5, 10),
+              Moon.new(2, 7, 3),
+              Moon.new(9, 8, 3)]
+
+moon_system = MoonSystem.new(test_moons)
+round_trips = {}
 loop do
-  i += 1
-  moons.combination(2).map { |moon_pair| Thread.new { moon_pair[0].update_velocity(moon_pair[1]) } }.each(&:join)
-  moons.map { |m| Thread.new { m.update_position } }.each(&:join)
-  break if moons.map(&:been_here_before?).inject(:&)
-  puts i if (i % 10_000).zero?
+  moon_system.run_steps(1)
+  # moon_system.moons.map { |moon| Thread.new { round_trips[moon.to_s] = moon_system.step_count if moon.round_trip_found? } }.each(&:join)
+  # moon_system.moons.map { |moon| Thread.new { moon.store_vector } }.each(&:join)
+  moon_system.moons.each { |moon| round_trips[moon.to_s] = moon_system.step_count if moon.round_trip_found? }
+  moon_system.moons.each(&:store_vector)
+  if round_trips.count.eql?(moon_system.moons.count)
+    puts "#{moon_system.step_count} :: round_trips = #{round_trips}"
+    puts "answer = #{round_trips.each_value.inject(:lcm)}"
+    # Test
+    puts 'expect = 4686774924'
+    break
+  end
+  puts "#{moon_system.step_count} :: round_trips = #{round_trips}" if (moon_system.step_count % 1_000).zero?
 end
-puts "got back to same locations after #{i} steps"
